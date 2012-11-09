@@ -391,43 +391,83 @@ __EOD__;
 				if (!$id)
 				{
 					// 新規作成
-					$query = "INSERT INTO ".$this->xpwiki->db->prefix($this->root->mydirname."_pginfo").
-						" (`name`,`title`,`buildtime`,`editedtime`,`uid`,`ucd`,`uname`,`freeze`,`einherit`,`eaids`,`egids`,`vinherit`,`vaids`,`vgids`,`lastuid`,`lastucd`,`lastuname`,`update`,`reading`,`name_ci`,`pgorder`)" .
-						" values('$name','$title','$buildtime','$editedtime','$uid','$ucd','$uname','$freeze','$einherit','$eaids','$egids','$vinherit','$vaids','$vgids','$lastuid','$lastucd','$lastuname','1','$reading','$name','$pgorder')";
+                    if(XOOPS_DB_TYPE == "pdo_pgsql"){
+    					$query = "INSERT INTO ".$this->xpwiki->db->prefix($this->root->mydirname."_pginfo").
+    						" (\"name\",\"title\",\"buildtime\",\"editedtime\",\"uid\",\"ucd\",\"uname\",\"freeze\",\"einherit\",\"eaids\",\"egids\",\"vinherit\",\"vaids\",\"vgids\",\"lastuid\",\"lastucd\",\"lastuname\",\"update\",\"reading\",\"name_ci\",\"pgorder\")" .
+    						" values('$name','$title','$buildtime','$editedtime','$uid','$ucd','$uname','$freeze','$einherit','$eaids','$egids','$vinherit','$vaids','$vgids','$lastuid','$lastucd','$lastuname','1','$reading','$name','$pgorder')";
+                    } else {
+    					$query = "INSERT INTO ".$this->xpwiki->db->prefix($this->root->mydirname."_pginfo").
+    						" (`name`,`title`,`buildtime`,`editedtime`,`uid`,`ucd`,`uname`,`freeze`,`einherit`,`eaids`,`egids`,`vinherit`,`vaids`,`vgids`,`lastuid`,`lastucd`,`lastuname`,`update`,`reading`,`name_ci`,`pgorder`)" .
+    						" values('$name','$title','$buildtime','$editedtime','$uid','$ucd','$uname','$freeze','$einherit','$eaids','$egids','$vinherit','$vaids','$vgids','$lastuid','$lastucd','$lastuname','1','$reading','$name','$pgorder')";
+                    }
 				}
 				else
 				{
-					// アップデート
-					if ($title)
-					{
-						$title = ",`title`='$title'";
-					}
-					//echo $title;
-					if ($reading) {
-						$reading = ',`reading`=\''.$reading.'\'';
-					}
-					$value =
-						 "`name`='$name'"
-						.$title
-						.$reading
-						.",`buildtime`='$buildtime'"
-						.",`editedtime`='$editedtime'"
-						.",`uid`='$uid'"
-						.",`ucd`='$ucd'"
-						.",`uname`='$uname'"
-						.",`freeze`='$freeze'"
-						.",`einherit`='$einherit'"
-						.",`eaids`='$eaids'"
-						.",`egids`='$egids'"
-						.",`vinherit`='$vinherit'"
-						.",`vaids`='$vaids'"
-						.",`vgids`='$vgids'"
-						.",`lastuid`='$lastuid'"
-						.",`lastucd`='$lastucd'"
-						.",`lastuname`='$lastuname'"
-						.",`update`='1'"
-						.",`name_ci`='$name'"
-						.",`pgorder`='$pgorder'";
+                    if(XOOPS_DB_TYPE == "pdo_pgsql"){
+    					// アップデート
+    					if ($title)
+    					{
+    						$title = ",\"title\"='$title'";
+    					}
+    					//echo $title;
+    					if ($reading) {
+    						$reading = ',"reading"=\''.$reading.'\'';
+    					}
+    					$value =
+    						 "\"name\"='$name'"
+    						.$title
+    						.$reading
+    						.",\"buildtime\"='$buildtime'"
+    						.",\"editedtime\"='$editedtime'"
+    						.",\"uid\"='$uid'"
+    						.",\"ucd\"='$ucd'"
+    						.",\"uname\"='$uname'"
+    						.",\"freeze\"='$freeze'"
+    						.",\"einherit\"='$einherit'"
+    						.",\"eaids\"='$eaids'"
+    						.",\"egids\"='$egids'"
+    						.",\"vinherit\"='$vinherit'"
+    						.",\"vaids\"='$vaids'"
+    						.",\"vgids\"='$vgids'"
+    						.",\"lastuid\"='$lastuid'"
+    						.",\"lastucd\"='$lastucd'"
+    						.",\"lastuname\"='$lastuname'"
+    						.",\"update\"='1'"
+    						.",\"name_ci\"='$name'"
+    						.",\"pgorder\"='$pgorder'";
+                    } else {
+    					// アップデート
+    					if ($title)
+    					{
+    						$title = ",`title`='$title'";
+    					}
+    					//echo $title;
+    					if ($reading) {
+    						$reading = ',`reading`=\''.$reading.'\'';
+    					}
+    					$value =
+    						 "`name`='$name'"
+    						.$title
+    						.$reading
+    						.",`buildtime`='$buildtime'"
+    						.",`editedtime`='$editedtime'"
+    						.",`uid`='$uid'"
+    						.",`ucd`='$ucd'"
+    						.",`uname`='$uname'"
+    						.",`freeze`='$freeze'"
+    						.",`einherit`='$einherit'"
+    						.",`eaids`='$eaids'"
+    						.",`egids`='$egids'"
+    						.",`vinherit`='$vinherit'"
+    						.",`vaids`='$vaids'"
+    						.",`vgids`='$vgids'"
+    						.",`lastuid`='$lastuid'"
+    						.",`lastucd`='$lastucd'"
+    						.",`lastuname`='$lastuname'"
+    						.",`update`='1'"
+    						.",`name_ci`='$name'"
+    						.",`pgorder`='$pgorder'";
+                    }
 					$query = "UPDATE ".$this->xpwiki->db->prefix($this->root->mydirname."_pginfo")." SET $value WHERE pgid = '$id' LIMIT 1;";
 				}
 				if (! $result = $this->xpwiki->db->queryF($query)) {
@@ -465,11 +505,19 @@ __EOD__;
 			echo "</div>";
 
 			// アップデートしなかったページ情報(テキストファイルがないページ)を削除済み(editedtime=0)にする
-			$query = "UPDATE ".$this->xpwiki->db->prefix($this->root->mydirname."_pginfo")." SET `editedtime` = '0' WHERE `update` = '0';";
+            if(XOOPS_DB_TYPE == "pdo_pgsql"){
+			    $query = "UPDATE ".$this->xpwiki->db->prefix($this->root->mydirname."_pginfo")." SET \"editedtime\" = '0' WHERE \"update\" = '0';";
+            } else {
+			    $query = "UPDATE ".$this->xpwiki->db->prefix($this->root->mydirname."_pginfo")." SET `editedtime` = '0' WHERE `update` = '0';";
+            }
 			$result=$this->xpwiki->db->queryF($query);
 
 			// アップデートフラグ戻し
-			$query = "UPDATE ".$this->xpwiki->db->prefix($this->root->mydirname."_pginfo")." SET `update` = '0';";
+            if(XOOPS_DB_TYPE == "pdo_pgsql"){
+    			$query = "UPDATE ".$this->xpwiki->db->prefix($this->root->mydirname."_pginfo")." SET \"update\" = '0';";
+            } else {
+			    $query = "UPDATE ".$this->xpwiki->db->prefix($this->root->mydirname."_pginfo")." SET `update` = '0';";
+            }
 			$result=$this->xpwiki->db->queryF($query);
 
 			@unlink ($work);
@@ -663,7 +711,11 @@ __EOD__;
 				}
 
 				$id = $this->func->get_pgid_by_name($page, FALSE, TRUE);
-				$query = "SELECT plain FROM `".$this->xpwiki->db->prefix($this->root->mydirname."_plain")."` WHERE `pgid` = ".$id.";";
+                if(XOOPS_DB_TYPE == "pdo_pgsql"){
+				    $query = "SELECT plain FROM \"".$this->xpwiki->db->prefix($this->root->mydirname."_plain")."\" WHERE \"pgid\" = ".$id.";";
+                } else {
+				    $query = "SELECT plain FROM `".$this->xpwiki->db->prefix($this->root->mydirname."_plain")."` WHERE `pgid` = ".$id.";";
+                }
 				$result = $this->xpwiki->db->query($query);
 				if ($result && mysql_num_rows($result))
 				{

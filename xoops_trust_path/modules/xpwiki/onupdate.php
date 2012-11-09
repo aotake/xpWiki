@@ -67,7 +67,7 @@ function xpwiki_onupdate_base( $module , $mydirname )
 	}
 
 	// TABLES (write here ALTER TABLE etc. if necessary)
-	$query = "SELECT `reading` FROM ".$db->prefix($mydirname."_pginfo") ;
+	$query = "SELECT {$QYOTE}reading{$QUOTE} FROM ".$db->prefix($mydirname."_pginfo") ;
 	if(! $db->query($query)) {
 		$db->queryF('ALTER TABLE `'.$db->prefix($mydirname."_pginfo").'` ADD `reading` VARCHAR( 255 ) BINARY NOT NULL');
 	}

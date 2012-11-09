@@ -507,7 +507,7 @@ EOD;
 			preg_match( '/^(\D+)(\d*)$/' , $op['mdir'] , $regs );
 			$dir_num = ($regs[2] === '')? '' : intval( $regs[2] ) ;
 
-			$query = "SELECT `id`, `name` FROM ".$db->prefix('pukiwikimod'.$dir_num.'_pginfo');
+			$query = "SELECT id, name FROM ".$db->prefix('pukiwikimod'.$dir_num.'_pginfo');
 			$res = $db->query($query);
 			$pgid_from = array();
 			if ($res) {
@@ -522,7 +522,7 @@ EOD;
 			
 			// あて先 pginfoDB 読み込み
 			$db =& $this->xpwiki->db;
-			$query = "SELECT `pgid`, `name` FROM ".$db->prefix($this->root->mydirname.'_pginfo');
+			$query = "SELECT pgid, name FROM ".$db->prefix($this->root->mydirname.'_pginfo');
 			$res = $db->query($query);
 			$pgid_to = array();
 			if ($res) {
@@ -545,19 +545,19 @@ EOD;
 			}
 			
 			// TRUNCATE TABLE `hyp_xc_xpwiki_import_pginfo` 
-			$query = 'TRUNCATE TABLE `'.$db->prefix($this->root->mydirname.'_pginfo').'`';
+			$query = 'TRUNCATE TABLE '.$db->prefix($this->root->mydirname.'_pginfo').'';
 			$res = $db->query($query);
 			if (!$res) return false;
 
 			foreach($id_def as $id => $name) {
-					$query = 'DELETE FROM `'.$db->prefix($this->root->mydirname.'_plain').'` WHERE `pgid`='.$id.' LIMIT 1';
+					$query = 'DELETE FROM '.$db->prefix($this->root->mydirname.'_plain').' WHERE pgid='.$id.' LIMIT 1';
 					$res = $db->query($query);
 			}
 			
 			foreach($pgid as $id => $name) {
 				$id = intval($id);
 				if ($id) {
-					$query = 'INSERT INTO `'.$db->prefix($this->root->mydirname.'_pginfo').'` ( `pgid` , `name` , `name_ci`) VALUES ( \''.$id.'\', \''.addslashes($name).'\', \''.addslashes($name).'\' )'; 
+					$query = 'INSERT INTO '.$db->prefix($this->root->mydirname.'_pginfo').' ( pgid , name , name_ci) VALUES ( \''.$id.'\', \''.addslashes($name).'\', \''.addslashes($name).'\' )'; 
 					$res = $db->query($query);
 				}
 			}
@@ -638,7 +638,7 @@ EOD;
 			$dir_num = intval( $regs[2] );
 		}
 
-		$query = "SELECT `aids`,`gids`,`vaids`,`vgids`,`lastediter`,`uid`,`freeze`,`unvisible` FROM ".$db->prefix('pukiwikimod'.$dir_num.'_pginfo').' WHERE name="'.addslashes($page).'" LIMIT 1';
+		$query = "SELECT aids,gids,vaids,vgids,lastediter,uid,freeze,unvisible FROM ".$db->prefix('pukiwikimod'.$dir_num.'_pginfo').' WHERE name="'.addslashes($page).'" LIMIT 1';
 		if ($res = $db->query($query)) {
 			list($aids, $gids, $vaids, $vgids, $lastediter, $uid, $freeze, $unvisible) = $db->fetchRow($res);
 		}

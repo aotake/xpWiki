@@ -185,6 +185,36 @@ EOD;
 		// fetch DB
 		$where = $files = $aname = array();
 		
+if(XOOPS_DB_TYPE == "pdo_pgsql"){
+		$where[] = "\"pgid\" = " . $this->func->get_pgid_by_name($page);
+		$where[] = "\"type\" LIKE 'image%'";
+		$where[] = "\"age\" = 0";
+		if ($pattern) {
+			$pattern4sql = addslashes($pattern);
+			$where[] = "\"name\" REGEXP '{$pattern4sql}'";
+		}
+		$where = join(' AND ',$where);
+		
+		// 並べ替え
+		if ($params['row'])
+		{
+			// ランダム表示？
+			$show_count = $params['row'] * $colmn;
+			$order = " ORDER BY RAND() LIMIT {$show_count}";
+		}
+		else if ($params['sort'])
+		{
+			// ファイル名順
+			$order = " ORDER BY \"name\" ASC";
+		}
+		else
+		{
+			// タイムスタンプ順
+			$order = " ORDER BY \"mtime\" ASC";
+		}
+		
+		$query = "SELECT name FROM \"".$this->xpwiki->db->prefix($this->root->mydirname . "_attach")."\" WHERE {$where}{$order};";
+} else {
 		$where[] = "`pgid` = " . $this->func->get_pgid_by_name($page);
 		$where[] = "`type` LIKE 'image%'";
 		$where[] = "`age` = 0";
@@ -213,6 +243,7 @@ EOD;
 		}
 		
 		$query = "SELECT name FROM `".$this->xpwiki->db->prefix($this->root->mydirname . "_attach")."` WHERE {$where}{$order};";
+}
 		$result = $this->xpwiki->db->query($query);
 		while($_row = mysql_fetch_row($result))
 		{

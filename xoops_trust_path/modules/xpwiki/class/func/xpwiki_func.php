@@ -3039,7 +3039,11 @@ EOD;
 		$s_page = addslashes($page);
 		$case = ($this->root->page_case_insensitive)? '_ci' : '';
 		$db =& $this->xpwiki->db;
-		$query = "SELECT `freeze` FROM ".$db->prefix($this->root->mydirname."_pginfo")." WHERE name".$case."='$s_page' LIMIT 1";
+        if(XOOPS_DB_TYPE == "pdo_pgsql"){
+    		$query = "SELECT \"freeze\" FROM ".$db->prefix($this->root->mydirname."_pginfo")." WHERE name".$case."='$s_page' LIMIT 1";
+        } else {
+		    $query = "SELECT `freeze` FROM ".$db->prefix($this->root->mydirname."_pginfo")." WHERE name".$case."='$s_page' LIMIT 1";
+        }
 
 		if ($res = $db->query($query)) {
 			list($freeze) = $db->fetchRow($res);
@@ -3059,13 +3063,23 @@ EOD;
 
 		$case = ($this->root->page_case_insensitive)? '_ci' : '';
 		$db =& $this->xpwiki->db;
-		$query = "SELECT `pgid` FROM ".$db->prefix($this->root->mydirname."_pginfo")." WHERE name".$case."='$s_page' LIMIT 1";
+        if(XOOPS_DB_TYPE == "pdo_pgsql"){
+		    $query = "SELECT \"pgid\" FROM ".$db->prefix($this->root->mydirname."_pginfo")." WHERE name".$case."='$s_page' LIMIT 1";
+        } else {
+    		$query = "SELECT `pgid` FROM ".$db->prefix($this->root->mydirname."_pginfo")." WHERE name".$case."='$s_page' LIMIT 1";
+        }
 		$res = $db->query($query);
 		list($ret) = $db->fetchRow($res);
 		if (!$ret && $make) {
+            if(XOOPS_DB_TYPE == "pdo_pgsql"){
+			$query = "INSERT INTO ".$db->prefix($this->root->mydirname."_pginfo").
+						" (\"name\",\"name_ci\")" .
+						" values('$s_page','$s_page')";
+            } else {
 			$query = "INSERT INTO ".$db->prefix($this->root->mydirname."_pginfo").
 						" (`name`,`name_ci`)" .
 						" values('$s_page','$s_page')";
+            }
 			$res = $db->queryF($query);
 			return ($res)? $this->get_pgid_by_name($page) : 0;
 		}
@@ -3088,7 +3102,11 @@ EOD;
 		if (isset($page_name[$this->root->mydirname][$id])) return $page_name[$this->root->mydirname][$id];
 
 		$db =& $this->xpwiki->db;
-		$query = "SELECT `name` FROM ".$db->prefix($this->root->mydirname."_pginfo")." WHERE pgid='$id' LIMIT 1";
+        if(XOOPS_DB_TYPE == "pdo_pgsql"){
+		    $query = "SELECT \"name\" FROM ".$db->prefix($this->root->mydirname."_pginfo")." WHERE pgid='$id' LIMIT 1";
+        } else {
+		    $query = "SELECT `name` FROM ".$db->prefix($this->root->mydirname."_pginfo")." WHERE pgid='$id' LIMIT 1";
+        }
 		$res = $db->query($query);
 		if (!$res) return '';
 		list($ret) = $db->fetchRow($res);
@@ -3106,7 +3124,11 @@ EOD;
 
 		$page = addslashes($page);
 		$db =& $this->xpwiki->db;
-		$query = "SELECT `title` FROM ".$db->prefix($this->root->mydirname."_pginfo")." WHERE name='$page' LIMIT 1;";
+        if(XOOPS_DB_TYPE == "pdo_pgsql"){
+		    $query = "SELECT \"title\" FROM ".$db->prefix($this->root->mydirname."_pginfo")." WHERE name='$page' LIMIT 1;";
+        } else {
+    		$query = "SELECT `title` FROM ".$db->prefix($this->root->mydirname."_pginfo")." WHERE name='$page' LIMIT 1;";
+        }
 		$res = $db->query($query);
 		if (!$res) return "";
 		$_ret = $db->fetchRow($res);
@@ -3231,10 +3253,18 @@ EOD;
 		if ($select) {
 			$keys = array_merge($select, array('name', 'pgid', 'pgorder'));
 			$keys = array_unique($keys);
-			$_select = '`' . join('`,`', $keys) . '`';
+            if(XOOPS_DB_TYPE == "pdo_pgsql"){
+			    $_select = '"' . join('","', $keys) . '"';
+            } else {
+			    $_select = '`' . join('`,`', $keys) . '`';
+            }
 			$query = 'SELECT '.$_select.' FROM '.$this->xpwiki->db->prefix($this->root->mydirname."_pginfo").$where.$order.$limit;
 		} else {
-			$query = 'SELECT `editedtime`, `name`, `pgid`, `pgorder` FROM '.$this->xpwiki->db->prefix($this->root->mydirname."_pginfo").$where.$order.$limit;
+            if(XOOPS_DB_TYPE == "pdo_pgsql"){
+			    $query = 'SELECT "editedtime", "name", "pgid", "pgorder" FROM '.$this->xpwiki->db->prefix($this->root->mydirname."_pginfo").$where.$order.$limit;
+            } else {
+			    $query = 'SELECT `editedtime`, `name`, `pgid`, `pgorder` FROM '.$this->xpwiki->db->prefix($this->root->mydirname."_pginfo").$where.$order.$limit;
+            }
 		}
 		$res = $this->xpwiki->db->query($query);
 		if ($res)
@@ -3308,7 +3338,30 @@ EOD;
 			if ($id)
 			{
 				// 以前に削除したページ
-				$value = "`name`='$s_name' ," .
+                if(XOOPS_DB_TYPE == "pdo_pgsql"){
+				$value = "\"name\"='$s_name' ," .
+						"\"title\"='$title' ," .
+						"\"buildtime\"='$buildtime' ," .
+						"\"editedtime\"='$editedtime' ," .
+						"\"uid\"='$uid' ," .
+						"\"ucd\"='$ucd' ," .
+						"\"uname\"='$uname' ," .
+						"\"freeze\"='0' ," .
+						"\"einherit\"='$einherit' ," .
+						"\"eaids\"='$eaids' ," .
+						"\"egids\"='$egids' ," .
+						"\"vinherit\"='$vinherit' ," .
+						"\"vaids\"='$vaids' ," .
+						"\"vgids\"='$vgids' ," .
+						"\"lastuid\"='$lastuid' ," .
+						"\"lastucd\"='$lastucd' ," .
+						"\"lastuname\"='$lastuname' ," .
+						"\"update\"='0' ," .
+						"\"reading\"='$reading' ," .
+						"\"name_ci\"='$s_name' ," .
+						"\"pgorder\"='$pgorder'";
+                } else {
+    				$value = "`name`='$s_name' ," .
 						"`title`='$title' ," .
 						"`buildtime`='$buildtime' ," .
 						"`editedtime`='$editedtime' ," .
@@ -3329,13 +3382,20 @@ EOD;
 						"`reading`='$reading' ," .
 						"`name_ci`='$s_name' ," .
 						"`pgorder`='$pgorder'";
+                }
 				$query = "UPDATE ".$this->xpwiki->db->prefix($this->root->mydirname."_pginfo")." SET $value WHERE pgid = '$id' LIMIT 1";
 			}
 			else
 			{
+                if(XOOPS_DB_TYPE == "pdo_pgsql"){
+				$query = "INSERT INTO ".$this->xpwiki->db->prefix($this->root->mydirname."_pginfo").
+						" (\"name\",\"title\",\"buildtime\",\"editedtime\",\"uid\",\"ucd\",\"uname\",\"freeze\",\"einherit\",\"eaids\",\"egids\",\"vinherit\",\"vaids\",\"vgids\",\"lastuid\",\"lastucd\",\"lastuname\",\"update\",\"reading\",\"name_ci\",\"pgorder\")" .
+						" values('$s_name','$title','$buildtime','$editedtime','$uid','$ucd','$uname','0','$einherit','$eaids','$egids','$vinherit','$vaids','$vgids','$lastuid','$lastucd','$lastuname','0','$reading','$s_name','$pgorder')";
+                } else {
 				$query = "INSERT INTO ".$this->xpwiki->db->prefix($this->root->mydirname."_pginfo").
 						" (`name`,`title`,`buildtime`,`editedtime`,`uid`,`ucd`,`uname`,`freeze`,`einherit`,`eaids`,`egids`,`vinherit`,`vaids`,`vgids`,`lastuid`,`lastucd`,`lastuname`,`update`,`reading`,`name_ci`,`pgorder`)" .
 						" values('$s_name','$title','$buildtime','$editedtime','$uid','$ucd','$uname','0','$einherit','$eaids','$egids','$vinherit','$vaids','$vgids','$lastuid','$lastucd','$lastuname','0','$reading','$s_name','$pgorder')";
+                }
 			}
 
 			$result = $this->xpwiki->db->queryF($query);
@@ -3351,13 +3411,23 @@ EOD;
 		// ページ更新
 		elseif ($action == "update")
 		{
-			$value = "`title`='$title' ," .
+            if(XOOPS_DB_TYPE == "pdo_pgsql"){
+    			$value = "\"title\"='$title' ," .
+					"\"editedtime\"='$editedtime' ," .
+					"\"lastuid\"='$lastuid' ," .
+					"\"lastucd\"='$lastucd' ," .
+					"\"lastuname\"='$lastuname' ," .
+					"\"pgorder\"='$pgorder'";
+    			if ($reading) $value .= " ,\"reading\"='$reading'";
+            } else {
+    			$value = "`title`='$title' ," .
 					"`editedtime`='$editedtime' ," .
 					"`lastuid`='$lastuid' ," .
 					"`lastucd`='$lastucd' ," .
 					"`lastuname`='$lastuname' ," .
 					"`pgorder`='$pgorder'";
-			if ($reading) $value .= " ,`reading`='$reading'";
+    			if ($reading) $value .= " ,`reading`='$reading'";
+            }
 			$query = "UPDATE ".$this->xpwiki->db->prefix($this->root->mydirname."_pginfo")." SET $value WHERE pgid = '$id' LIMIT 1";
 			$result = $this->xpwiki->db->queryF($query);
 		}
@@ -3365,9 +3435,13 @@ EOD;
 		// ページ削除
 		elseif ($action == "delete")
 		{
-
-			$value = "`title`='' ," .
+            if(XOOPS_DB_TYPE == "pdo_pgsql"){
+			    $value = "\"title\"='' ," .
                      "editedtime=0";
+            } else {
+			    $value = "`title`='' ," .
+                     "editedtime=0";
+            }
 			$query = "UPDATE ".$this->xpwiki->db->prefix($this->root->mydirname."_pginfo")." SET $value WHERE pgid = '$id' LIMIT 1";
 			$result = $this->xpwiki->db->queryF($query);
 		}
@@ -3390,7 +3464,11 @@ EOD;
 		$id = $this->get_pgid_by_name($page);
 
 		if ($id) {
-			$value = "`freeze`='$freeze'";
+            if(XOOPS_DB_TYPE == "pdo_pgsql"){
+			    $value = "\"freeze\"='$freeze'";
+            } else {
+			    $value = "`freeze`='$freeze'";
+            }
 			$query = "UPDATE ".$this->xpwiki->db->prefix($this->root->mydirname."_pginfo")." SET $value WHERE pgid = '$id' LIMIT 1";
 			$result = $this->xpwiki->db->queryF($query);
 		}
@@ -3413,17 +3491,31 @@ EOD;
 					$$key = '&'.trim($pginfo[$key],'&').'&';
 				}
 			}
-			$value = "`einherit`='$einherit' ," .
+            if(XOOPS_DB_TYPE == "pdo_pgsql"){
+    			$value = "\"einherit\"='$einherit' ," .
+					"\"eaids\"='$eaids' ," .
+					"\"egids\"='$egids' ," .
+					"\"vinherit\"='$vinherit' ," .
+					"\"vaids\"='$vaids' ," .
+					"\"vgids\"='$vgids'";
+    			if ($change_uid) {
+    				$uname = addslashes($pginfo['uname']);
+    				$value .= ",\"uid\"='{$pginfo['uid']}'";
+    				$value .= ",\"uname\"='{$uname}'";
+    			}
+            } else {
+    			$value = "`einherit`='$einherit' ," .
 					"`eaids`='$eaids' ," .
 					"`egids`='$egids' ," .
 					"`vinherit`='$vinherit' ," .
 					"`vaids`='$vaids' ," .
 					"`vgids`='$vgids'";
-			if ($change_uid) {
-				$uname = addslashes($pginfo['uname']);
-				$value .= ",`uid`='{$pginfo['uid']}'";
-				$value .= ",`uname`='{$uname}'";
-			}
+    			if ($change_uid) {
+    				$uname = addslashes($pginfo['uname']);
+    				$value .= ",`uid`='{$pginfo['uid']}'";
+    				$value .= ",`uname`='{$uname}'";
+    			}
+            }
 			$query = "UPDATE ".$this->xpwiki->db->prefix($this->root->mydirname."_pginfo")." SET $value WHERE pgid = '$id' LIMIT 1";
 			$result = $this->xpwiki->db->query($query);
 		}
@@ -3445,7 +3537,11 @@ EOD;
 
 			$_toname = addslashes($toname);
 			$reading = addslashes($this->get_page_reading($toname, TRUE));
-			$value = "`name`='$_toname', `name_ci`='$_toname', `reading`='$reading'";
+            if(XOOPS_DB_TYPE == "pdo_pgsql"){
+			    $value = "\"name\"='$_toname', \"name_ci\"='$_toname', \"reading\"='$reading'";
+            } else {
+			    $value = "`name`='$_toname', `name_ci`='$_toname', `reading`='$reading'";
+            }
 			$query = "UPDATE ".$this->xpwiki->db->prefix($this->root->mydirname."_pginfo")." SET $value WHERE pgid = '$id' LIMIT 1";
 			$result = $this->xpwiki->db->query($query);
 
@@ -3605,7 +3701,11 @@ EOD;
 		if ($action === 'insert')
 		{
 			// 念のため削除
-			$query = "DELETE FROM ".$this->xpwiki->db->prefix($this->root->mydirname."_plain")." WHERE `pgid`='$pgid' LIMIT 1";
+            if(XOOPS_DB_TYPE == "pdo_pgsql"){
+    			$query = "DELETE FROM ".$this->xpwiki->db->prefix($this->root->mydirname."_plain")." WHERE \"pgid\"='$pgid'";
+            } else {
+			    $query = "DELETE FROM ".$this->xpwiki->db->prefix($this->root->mydirname."_plain")." WHERE `pgid`='$pgid' LIMIT 1";
+            }
 			$this->xpwiki->db->queryF($query);
 
 			$query = "INSERT INTO ".$this->xpwiki->db->prefix($this->root->mydirname."_plain")." (pgid,plain) VALUES($pgid,'$data');";
@@ -3685,10 +3785,16 @@ EOD;
 			// Optimaize DB tables
 			$tables = array();
 			foreach (array('attach', 'cache', 'count', 'pginfo', 'plain', 'rel', 'tb') as $table) {
-				$tables[] = '`' . $this->xpwiki->db->prefix($this->root->mydirname . '_' . $table) .  '`';
+                if(XOOPS_DB_TYPE == "pdo_pgsql"){
+				    $tables[] = '"' . $this->xpwiki->db->prefix($this->root->mydirname . '_' . $table) .  '"';
+                } else {
+				    $tables[] = '`' . $this->xpwiki->db->prefix($this->root->mydirname . '_' . $table) .  '`';
+                }
 			}
-			$sql = 'OPTIMIZE TABLE '.join(',', $tables);
-			$this->xpwiki->db->queryF($sql);
+            if (XOOPS_DB_TYPE == "mysql"){
+			    $sql = 'OPTIMIZE TABLE '.join(',', $tables);
+    			$this->xpwiki->db->queryF($sql);
+            }
 		}
 		else
 			return false;
@@ -3721,7 +3827,11 @@ EOD;
 		// 新規作成
 		if ($action == "insert")
 		{
-			$query = "INSERT INTO ".$this->xpwiki->db->prefix($this->root->mydirname."_attach")." (`pgid`,`name`,`type`,`mtime`,`size`,`mode`,`count`,`age`,`pass`,`freeze`,`copyright`,`owner`) VALUES('$pgid','$name','$type','$mtime','$size','$mode','$count','$age','$pass','$freeze','$copyright','$owner');";
+            if(XOOPS_DB_TYPE == "pdo_pgsql"){
+			    $query = "INSERT INTO ".$this->xpwiki->db->prefix($this->root->mydirname."_attach")." (\"pgid\",\"name\",\"type\",\"mtime\",\"size\",\"mode\",\"count\",\"age\",\"pass\",\"freeze\",\"copyright\",\"owner\") VALUES('$pgid','$name','$type','$mtime','$size','$mode','$count','$age','$pass','$freeze','$copyright','$owner');";
+            } else {
+			    $query = "INSERT INTO ".$this->xpwiki->db->prefix($this->root->mydirname."_attach")." (`pgid`,`name`,`type`,`mtime`,`size`,`mode`,`count`,`age`,`pass`,`freeze`,`copyright`,`owner`) VALUES('$pgid','$name','$type','$mtime','$size','$mode','$count','$age','$pass','$freeze','$copyright','$owner');";
+            }
 			$result=$this->xpwiki->db->queryF($query);
 			//if (!$result) echo $query."<hr>";
 		}
@@ -3729,19 +3839,35 @@ EOD;
 		// 更新
 		elseif ($action == "update")
 		{
-			$value = "`pgid`='$pgid'"
-			.",`name`='$name'"
-			.",`type`='$type'"
-			.",`mtime`='$mtime'"
-			.",`size`='$size'"
-			.",`mode`='$mode'"
-			.",`count`='$count'"
-			.",`age`='$age'"
-			.",`pass`='$pass'"
-			.",`freeze`='$freeze'"
-			.",`copyright`='$copyright'"
-			.",`owner`='$owner'";
-			$query = "UPDATE ".$this->xpwiki->db->prefix($this->root->mydirname."_attach")." SET $value WHERE `id`='$id' LIMIT 1";
+            if(XOOPS_DB_TYPE == "pdo_pgsql"){
+                $value = "\"pgid\"='$pgid'"
+                .",\"name\"='$name'"
+                .",\"type\"='$type'"
+                .",\"mtime\"='$mtime'"
+                .",\"size\"='$size'"
+                .",\"mode\"='$mode'"
+                .",\"count\"='$count'"
+                .",\"age\"='$age'"
+                .",\"pass\"='$pass'"
+                .",\"freeze\"='$freeze'"
+                .",\"copyright\"='$copyright'"
+                .",\"owner\"='$owner'";
+    			$query = "UPDATE ".$this->xpwiki->db->prefix($this->root->mydirname."_attach")." SET $value WHERE \"id\"='$id' LIMIT 1";
+            } else {
+                $value = "`pgid`='$pgid'"
+                .",`name`='$name'"
+                .",`type`='$type'"
+                .",`mtime`='$mtime'"
+                .",`size`='$size'"
+                .",`mode`='$mode'"
+                .",`count`='$count'"
+                .",`age`='$age'"
+                .",`pass`='$pass'"
+                .",`freeze`='$freeze'"
+                .",`copyright`='$copyright'"
+                .",`owner`='$owner'";
+    			$query = "UPDATE ".$this->xpwiki->db->prefix($this->root->mydirname."_attach")." SET $value WHERE `id`='$id' LIMIT 1";
+            }
 			$result=$this->xpwiki->db->queryF($query);
 			//if (!$result) echo $query."<hr>";
 		}
@@ -3752,7 +3878,11 @@ EOD;
 			$q_name = ($name)? " AND name='{$name}' AND age='{$age}' LIMIT 1" : "";
 
 			$ret = array();
-			$query = "SELECT name FROM ".$this->xpwiki->db->prefix($this->root->mydirname."_attach")." WHERE `pgid` = {$pgid}{$q_name};";
+            if(XOOPS_DB_TYPE == "pdo_pgsql"){
+			    $query = "SELECT name FROM ".$this->xpwiki->db->prefix($this->root->mydirname."_attach")." WHERE \"pgid\" = {$pgid}{$q_name};";
+            } else {
+			    $query = "SELECT name FROM ".$this->xpwiki->db->prefix($this->root->mydirname."_attach")." WHERE `pgid` = {$pgid}{$q_name};";
+            }
 			if ($result=$this->xpwiki->db->query($query))
 			{
 				while($data = $this->xpwiki->db->fetchRow($result))
@@ -3762,7 +3892,11 @@ EOD;
 			}
 			if (!$ret) $ret = TRUE;
 
-			$query = "DELETE FROM ".$this->xpwiki->db->prefix($this->root->mydirname."_attach")." WHERE `pgid` = {$pgid}{$q_name};";
+            if(XOOPS_DB_TYPE == "pdo_pgsql"){
+			    $query = "DELETE FROM ".$this->xpwiki->db->prefix($this->root->mydirname."_attach")." WHERE \"pgid\" = {$pgid}{$q_name};";
+            } else {
+			    $query = "DELETE FROM ".$this->xpwiki->db->prefix($this->root->mydirname."_attach")." WHERE `pgid` = {$pgid}{$q_name};";
+            }
 
 			$result=$this->xpwiki->db->queryF($query);
 			//if (!$result) echo $query."<hr>";
@@ -3777,7 +3911,11 @@ EOD;
 		$data = 0;
 		$pgid = $this->get_pgid_by_name($page);
 		$name = addslashes($name);
-		$query = "SELECT `id` FROM ".$this->xpwiki->db->prefix($this->root->mydirname."_attach")." WHERE `pgid`='{$pgid}' AND `name`='{$name}' AND age='{$age}' LIMIT 1";
+        if(XOOPS_DB_TYPE == "pdo_pgsql"){
+		    $query = "SELECT \"id\" FROM ".$this->xpwiki->db->prefix($this->root->mydirname."_attach")." WHERE \"pgid\"='{$pgid}' AND \"name\"='{$name}' AND age='{$age}' LIMIT 1";
+        } else {
+    		$query = "SELECT `id` FROM ".$this->xpwiki->db->prefix($this->root->mydirname."_attach")." WHERE `pgid`='{$pgid}' AND `name`='{$name}' AND age='{$age}' LIMIT 1";
+        }
 		if ($result=$this->xpwiki->db->query($query)) {
 			$data = $this->xpwiki->db->fetchRow($result);
 			$data = $data[0];
@@ -3788,7 +3926,11 @@ EOD;
 	// Get attachDB info
 	function get_attachdbinfo ($id) {
 		$dbinfo = array();
-		$query = 'SELECT `type`, `mtime`, `size` FROM '.$this->xpwiki->db->prefix($this->root->mydirname.'_attach').' WHERE `id`=\''.$id.'\' LIMIT 1';
+        if(XOOPS_DB_TYPE == "pdo_pgsql"){
+		    $query = 'SELECT \"type\", \"mtime\", \"size\" FROM '.$this->xpwiki->db->prefix($this->root->mydirname.'_attach').' WHERE \"id\"=\''.$id.'\' LIMIT 1';
+        } else {
+		    $query = 'SELECT `type`, `mtime`, `size` FROM '.$this->xpwiki->db->prefix($this->root->mydirname.'_attach').' WHERE `id`=\''.$id.'\' LIMIT 1';
+        }
 		if ($result = $this->xpwiki->db->query($query)) {
 			$dbinfo = $this->xpwiki->db->fetchArray($result);
 		}
@@ -3856,14 +3998,22 @@ EOD;
 
 		$limit = $max? ' LIMIT ' . $start . ',' . $max : '';
 
-		$where = "`relid` = ".$this->get_pgid_by_name($page)." AND p.pgid = r.pgid";
+        if(XOOPS_DB_TYPE == "pdo_pgsql"){
+		    $where = "\"relid\" = ".$this->get_pgid_by_name($page)." AND p.pgid = r.pgid";
+        } else {
+		    $where = "`relid` = ".$this->get_pgid_by_name($page)." AND p.pgid = r.pgid";
+        }
 		$r_where = $this->get_readable_where('p.');
 		if ($r_where) {
 			$where = "($where AND ($r_where))";
 		}
 		$where = " WHERE " . $where;
 
-		$query = "SELECT p.name, p.editedtime FROM `".$this->xpwiki->db->prefix($this->root->mydirname."_rel")."` AS r, `".$this->xpwiki->db->prefix($this->root->mydirname."_pginfo")."` AS p " . $where . $limit;
+        if(XOOPS_DB_TYPE == "pdo_pgsql"){
+		    $query = "SELECT p.name, p.editedtime FROM \"".$this->xpwiki->db->prefix($this->root->mydirname."_rel")."\" AS r, \"".$this->xpwiki->db->prefix($this->root->mydirname."_pginfo")."\" AS p " . $where . $limit;
+        } else {
+		    $query = "SELECT p.name, p.editedtime FROM `".$this->xpwiki->db->prefix($this->root->mydirname."_rel")."` AS r, `".$this->xpwiki->db->prefix($this->root->mydirname."_pginfo")."` AS p " . $where . $limit;
+        }
 		$result = $this->xpwiki->db->query($query);
 		//echo $query;
 
@@ -3890,14 +4040,22 @@ EOD;
 			return $links[$this->root->mydirname][$page];
 		}
 
-		$where = "`relid` = ".$this->get_pgid_by_name($page)." AND p.pgid = r.pgid";
+        if(XOOPS_DB_TYPE == "pdo_pgsql"){
+		    $where = "\"relid\" = ".$this->get_pgid_by_name($page)." AND p.pgid = r.pgid";
+        } else {
+		    $where = "`relid` = ".$this->get_pgid_by_name($page)." AND p.pgid = r.pgid";
+        }
 		$r_where = $this->get_readable_where('p.');
 		if ($r_where) {
 			$where = "($where AND ($r_where))";
 		}
 		$where = " WHERE " . $where;
 
-		$query = "SELECT COUNT(*) FROM `".$this->xpwiki->db->prefix($this->root->mydirname."_rel")."` AS r, `".$this->xpwiki->db->prefix($this->root->mydirname."_pginfo")."` AS p " . $where;
+        if(XOOPS_DB_TYPE == "pdo_pgsql"){
+		    $query = "SELECT COUNT(*) FROM \"".$this->xpwiki->db->prefix($this->root->mydirname."_rel")."\" AS r, \"".$this->xpwiki->db->prefix($this->root->mydirname."_pginfo")."\" AS p " . $where;
+        } else {
+		    $query = "SELECT COUNT(*) FROM `".$this->xpwiki->db->prefix($this->root->mydirname."_rel")."` AS r, `".$this->xpwiki->db->prefix($this->root->mydirname."_pginfo")."` AS p " . $where;
+        }
 		$result = $this->xpwiki->db->query($query);
 		//echo $query;
 
@@ -3924,7 +4082,11 @@ EOD;
 		}
 		$where = " WHERE " . $where;
 
-		$query = "SELECT p.name, p.editedtime FROM `".$this->xpwiki->db->prefix($this->root->mydirname."_rel")."` AS r, `".$this->xpwiki->db->prefix($this->root->mydirname."_pginfo")."` AS p ".$where;
+        if(XOOPS_DB_TYPE == "pdo_pgsql"){
+		    $query = "SELECT p.name, p.editedtime FROM \"".$this->xpwiki->db->prefix($this->root->mydirname."_rel")."\" AS r, \"".$this->xpwiki->db->prefix($this->root->mydirname."_pginfo")."\" AS p ".$where;
+        } else {
+		    $query = "SELECT p.name, p.editedtime FROM `".$this->xpwiki->db->prefix($this->root->mydirname."_rel")."` AS r, `".$this->xpwiki->db->prefix($this->root->mydirname."_pginfo")."` AS p ".$where;
+        }
 		$result = $this->xpwiki->db->query($query);
 		//echo $query;
 
@@ -3959,13 +4121,23 @@ EOD;
 				$where[$this->root->mydirname][$key] = '0 != 0';
 			} else {
 				$_where = "";
-				if ($uid) $_where .= " ({$table}`uid` = '$uid') OR";
-				$_where .= " ({$table}`vaids` = 'all')";
-				if ($uid) $_where .= " OR ({$table}`vaids` LIKE '%&{$uid}&%')";
-				foreach($this->get_mygroups($uid) as $gid)
-				{
-					$_where .= " OR ({$table}`vgids` LIKE '%&{$gid}&%')";
-				}
+                if(XOOPS_DB_TYPE == "pdo_pgsql"){
+                    if ($uid) $_where .= " ({$table}\"uid\" = '$uid') OR";
+                    $_where .= " ({$table}\"vaids\" = 'all')";
+                    if ($uid) $_where .= " OR ({$table}\"vaids\" LIKE '%&{$uid}&%')";
+                    foreach($this->get_mygroups($uid) as $gid)
+                    {
+                        $_where .= " OR ({$table}\"vgids\" LIKE '%&{$gid}&%')";
+                    }
+                } else {
+                    if ($uid) $_where .= " ({$table}`uid` = '$uid') OR";
+                    $_where .= " ({$table}`vaids` = 'all')";
+                    if ($uid) $_where .= " OR ({$table}`vaids` LIKE '%&{$uid}&%')";
+                    foreach($this->get_mygroups($uid) as $gid)
+                    {
+                        $_where .= " OR ({$table}`vgids` LIKE '%&{$gid}&%')";
+                    }
+                }
 				$where[$this->root->mydirname][$key] = $_where.' ';
 			}
 		}
@@ -3977,7 +4149,11 @@ EOD;
 
 		$pgid = $this->get_pgid_by_name($page);
 
-		$query = 'SELECT `plain` FROM `'.$this->xpwiki->db->prefix($this->root->mydirname."_plain").'` WHERE `pgid` = \''.$pgid.'\' LIMIT 1';
+        if(XOOPS_DB_TYPE == "pdo_pgsql"){
+		    $query = 'SELECT \"plain\" FROM \"'.$this->xpwiki->db->prefix($this->root->mydirname."_plain").'\" WHERE \"pgid\" = \''.$pgid.'\' LIMIT 1';
+        } else {
+		    $query = 'SELECT `plain` FROM `'.$this->xpwiki->db->prefix($this->root->mydirname."_plain").'` WHERE `pgid` = \''.$pgid.'\' LIMIT 1';
+        }
 		$result = $this->xpwiki->db->query($query);
 
 		$text = '';
@@ -3991,7 +4167,11 @@ EOD;
 	function get_pg_buildtime($page) {
 		$pgid = $this->get_pgid_by_name($page);
 
-		$query = 'SELECT `buildtime` FROM `'.$this->xpwiki->db->prefix($this->root->mydirname."_pginfo").'` WHERE `pgid` = \''.$pgid.'\' LIMIT 1';
+        if(XOOPS_DB_TYPE == "pdo_pgsql"){
+		    $query = 'SELECT \"buildtime\" FROM \"'.$this->xpwiki->db->prefix($this->root->mydirname."_pginfo").'\" WHERE \"pgid\" = \''.$pgid.'\' LIMIT 1';
+        } else {
+		    $query = 'SELECT `buildtime` FROM `'.$this->xpwiki->db->prefix($this->root->mydirname."_pginfo").'` WHERE `pgid` = \''.$pgid.'\' LIMIT 1';
+        }
 		$result = $this->xpwiki->db->query($query);
 
 		$time = NULL;
@@ -4010,11 +4190,19 @@ EOD;
 		{
 			clearstatcache();
 			$editedtime = $this->get_filetime($page);
-			$value = "`editedtime` = '$editedtime' ,".
-					"`lastuid`='{$this->root->userinfo['uid']}' ," .
-					"`lastucd`='{$this->root->userinfo['ucd']}' ," .
-					"`lastuname`='{$this->root->cookie['name']}'";
-			$query = "UPDATE ".$this->xpwiki->db->prefix($this->root->mydirname."_pginfo")." SET $value WHERE `pgid`='$id'";
+            if(XOOPS_DB_TYPE == "pdo_pgsql"){
+                $value = "\"editedtime\" = '$editedtime' ,".
+                        "\"lastuid\"='{$this->root->userinfo['uid']}' ," .
+                        "\"lastucd\"='{$this->root->userinfo['ucd']}' ," .
+                        "\"lastuname\"='{$this->root->cookie['name']}'";
+    			$query = "UPDATE ".$this->xpwiki->db->prefix($this->root->mydirname."_pginfo")." SET $value WHERE \"pgid\"='$id'";
+            } else {
+                $value = "`editedtime` = '$editedtime' ,".
+                        "`lastuid`='{$this->root->userinfo['uid']}' ," .
+                        "`lastucd`='{$this->root->userinfo['ucd']}' ," .
+                        "`lastuname`='{$this->root->cookie['name']}'";
+    			$query = "UPDATE ".$this->xpwiki->db->prefix($this->root->mydirname."_pginfo")." SET $value WHERE `pgid`='$id'";
+            }
 			$result = $this->xpwiki->db->queryF($query);
 		}
 	}
@@ -4165,7 +4353,11 @@ EOD;
 			$pgid = $this->get_pgid_by_name($page);
 
 			if ($pgid) {
-				$query = 'SELECT `reading` FROM `'.$this->xpwiki->db->prefix($this->root->mydirname."_pginfo").'` WHERE `pgid` = \''.$pgid.'\' LIMIT 1';
+                if(XOOPS_DB_TYPE == "pdo_pgsql"){
+				    $query = 'SELECT \"reading\" FROM \"'.$this->xpwiki->db->prefix($this->root->mydirname."_pginfo").'\" WHERE \"pgid\" = \''.$pgid.'\' LIMIT 1';
+                } else {
+				    $query = 'SELECT `reading` FROM `'.$this->xpwiki->db->prefix($this->root->mydirname."_pginfo").'` WHERE `pgid` = \''.$pgid.'\' LIMIT 1';
+                }
 				$result = $this->xpwiki->db->query($query);
 
 				if ($result)
@@ -4267,8 +4459,13 @@ EOD;
 
 		// DBに保存
 		if ($pgid) {
-			$value = "`reading` = '".addslashes($reading)."'";
-			$query = "UPDATE ".$this->xpwiki->db->prefix($this->root->mydirname."_pginfo")." SET $value WHERE `pgid`='$pgid'";
+            if(XOOPS_DB_TYPE == "pdo_pgsql"){
+			    $value = "\"reading\" = '".addslashes($reading)."'";
+    			$query = "UPDATE ".$this->xpwiki->db->prefix($this->root->mydirname."_pginfo")." SET $value WHERE \"pgid\"='$pgid'";
+            } else {
+			    $value = "`reading` = '".addslashes($reading)."'";
+    			$query = "UPDATE ".$this->xpwiki->db->prefix($this->root->mydirname."_pginfo")." SET $value WHERE `pgid`='$pgid'";
+            }
 			$result = $this->xpwiki->db->queryF($query);
 		}
 
@@ -4386,7 +4583,11 @@ EOD;
 	function get_page_order ($page) {
 		if (! isset($this->root->pgorders[$page])) {
 			$pgid = $this->get_pgid_by_name($page);
-			$query = 'SELECT `pgorder` FROM `'.$this->xpwiki->db->prefix($this->root->mydirname."_pginfo").'` WHERE `pgid` = \''.$pgid.'\' LIMIT 1';
+            if(XOOPS_DB_TYPE == "pdo_pgsql"){
+			    $query = 'SELECT "pgorder" FROM "'.$this->xpwiki->db->prefix($this->root->mydirname."_pginfo").'" WHERE "pgid" = \''.$pgid.'\' LIMIT 1';
+            } else {
+			    $query = 'SELECT `pgorder` FROM `'.$this->xpwiki->db->prefix($this->root->mydirname."_pginfo").'` WHERE `pgid` = \''.$pgid.'\' LIMIT 1';
+            }
 			if ($pgid && $result = $this->xpwiki->db->query($query)) {
 				list($this->root->pgorders[$page]) = $this->xpwiki->db->fetchRow($result);
 				$this->root->pgorders[$page] = floatval($this->root->pgorders[$page]);
@@ -4402,7 +4603,11 @@ EOD;
 
 		if ($this->is_page($page)) return $page;
 
-		$query = 'SELECT `name` FROM `'.$this->xpwiki->db->prefix($this->root->mydirname.'_pginfo').'` WHERE `name_ci` = \''.addslashes($page).'\' LIMIT 1';
+        if(XOOPS_DB_TYPE == "pdo_pgsql"){
+		    $query = 'SELECT \"name\" FROM \"'.$this->xpwiki->db->prefix($this->root->mydirname.'_pginfo').'\" WHERE \"name_ci\" = \''.addslashes($page).'\' LIMIT 1';
+        } else {
+		    $query = 'SELECT `name` FROM `'.$this->xpwiki->db->prefix($this->root->mydirname.'_pginfo').'` WHERE `name_ci` = \''.addslashes($page).'\' LIMIT 1';
+        }
 		if ($result = $this->xpwiki->db->query($query)) {
 			list($fixed_page) = $this->xpwiki->db->fetchRow($result);
 			if ($fixed_page) {
@@ -4441,7 +4646,11 @@ EOD;
 		if (!$page || !$this->is_page($page)) return 0;
 		$pgid = $this->get_pgid_by_name($page);
 		$count = 0;
-		$sql = 'SELECT `count` FROM `'.$this->xpwiki->db->prefix($this->root->mydirname."_count").'` WHERE pgid = '.$pgid.' LIMIT 1';
+        if(XOOPS_DB_TYPE == "pdo_pgsql"){
+		    $sql = 'SELECT \"count\" FROM \"'.$this->xpwiki->db->prefix($this->root->mydirname."_count").'\" WHERE pgid = '.$pgid.' LIMIT 1';
+        } else {
+		    $sql = 'SELECT `count` FROM `'.$this->xpwiki->db->prefix($this->root->mydirname."_count").'` WHERE pgid = '.$pgid.' LIMIT 1';
+        }
 		$res = $this->xpwiki->db->query($sql);
 		if ($res) {
 			list($count) = $this->xpwiki->db->fetchRow($res);
@@ -4460,7 +4669,11 @@ EOD;
 		$s_page = addslashes($page);
 		$case = ($this->root->page_case_insensitive)? '_ci' : '';
 		$db =& $this->xpwiki->db;
-		$query = "SELECT `buildtime`, `editedtime` FROM ".$db->prefix($this->root->mydirname."_pginfo")." WHERE name".$case."='$s_page' LIMIT 1";
+        if(XOOPS_DB_TYPE == "pdo_pgsql"){
+		    $query = "SELECT \"buildtime\", \"editedtime\" FROM ".$db->prefix($this->root->mydirname."_pginfo")." WHERE name".$case."='$s_page' LIMIT 1";
+        } else {
+		    $query = "SELECT `buildtime`, `editedtime` FROM ".$db->prefix($this->root->mydirname."_pginfo")." WHERE name".$case."='$s_page' LIMIT 1";
+        }
 		if ($res = $db->query($query)) {
 			$time = $db->fetchRow($res);
 		}
@@ -4522,34 +4735,62 @@ EOD;
 		$ttl = intval($ttl);
 		$dbtable = $this->xpwiki->db->prefix($this->root->mydirname.'_cache');
 
-		// Old cache delete
-		$sql = 'DELETE FROM `'.$dbtable.'` WHERE `ttl` > 0 AND (`mtime` + `ttl`) < '.$this->cont['UTC'];
-		if ($res = $this->xpwiki->db->queryF($sql)) {
-			list($count) = $this->xpwiki->db->fetchRow($res);
-			if ($count) {
-				$sql = 'OPTIMIZE TABLE `'.$dbtable.'`';
-				$this->xpwiki->db->queryF($sql);
-			}
-		} else {
-			// Table not found.
-			return FALSE;
-		}
-		// check
-		$sql = 'SELECT count(*) FROM `'.$dbtable.'` WHERE `key`=\''.$key.'\' AND `plugin`=\''.$plugin.'\'';
-		$count = 0;
-		if ($res = $this->xpwiki->db->query($sql)) {
-			list($count) = $this->xpwiki->db->fetchRow($res);
-		}
-		if ($count) {
-			$sql = 'UPDATE `'.$dbtable.'`';
-			$sql .= ' SET `data`=\''.$data.'\',';
-			$sql .= '`mtime`=\''.$mtime.'\',';
-			$sql .= '`ttl`=\''.$ttl.'\'';
-			$sql .= ' WHERE `key`=\''.$key.'\' AND `plugin`=\''.$plugin.'\'';
-		} else {
-			$sql = 'INSERT INTO `'.$dbtable.'` (`key`, `plugin`, `data`, `mtime`, `ttl`)';
-			$sql .= ' VALUES (\''.$key.'\', \''.$plugin.'\', \''.$data.'\', \''.$mtime.'\', \''.$ttl.'\')';
-		}
+// --- pgsql と mysql でメソッドをわけたい
+        if(XOOPS_DB_TYPE == "pdo_pgsql"){
+                // Old cache delete
+                $sql = 'DELETE FROM "'.$dbtable.'" WHERE "ttl" > 0 AND ("mtime" + "ttl") < '.$this->cont['UTC'];
+                if ($res = $this->xpwiki->db->queryF($sql)) {
+                    list($count) = $this->xpwiki->db->fetchRow($res);
+                } else {
+                    // Table not found.
+                    return FALSE;
+                }
+                // check
+                $sql = 'SELECT count(*) FROM "'.$dbtable.'" WHERE "key"=\''.$key.'\' AND "plugin"=\''.$plugin.'\'';
+                $count = 0;
+                if ($res = $this->xpwiki->db->query($sql)) {
+                    list($count) = $this->xpwiki->db->fetchRow($res);
+                }
+                if ($count) {
+                    $sql = 'UPDATE "'.$dbtable.'"';
+                    $sql .= ' SET "data"=\''.$data.'\',';
+                    $sql .= '"mtime"=\''.$mtime.'\',';
+                    $sql .= '"ttl"=\''.$ttl.'\'';
+                    $sql .= ' WHERE "key"=\''.$key.'\' AND "plugin"=\''.$plugin.'\'';
+                } else {
+                    $sql = 'INSERT INTO "'.$dbtable.'" ("key", "plugin", "data", "mtime", "ttl")';
+                    $sql .= ' VALUES (\''.$key.'\', \''.$plugin.'\', \''.$data.'\', \''.$mtime.'\', \''.$ttl.'\')';
+                }
+        } else {
+                // Old cache delete
+                $sql = 'DELETE FROM `'.$dbtable.'` WHERE `ttl` > 0 AND (`mtime` + `ttl`) < '.$this->cont['UTC'];
+                if ($res = $this->xpwiki->db->queryF($sql)) {
+                    list($count) = $this->xpwiki->db->fetchRow($res);
+                    if ($count && XOOPS_DB_TYPE == "mysql") {
+                        $sql = 'OPTIMIZE TABLE `'.$dbtable.'`';
+                        $this->xpwiki->db->queryF($sql);
+                    }
+                } else {
+                    // Table not found.
+                    return FALSE;
+                }
+                // check
+                $sql = 'SELECT count(*) FROM `'.$dbtable.'` WHERE `key`=\''.$key.'\' AND `plugin`=\''.$plugin.'\'';
+                $count = 0;
+                if ($res = $this->xpwiki->db->query($sql)) {
+                    list($count) = $this->xpwiki->db->fetchRow($res);
+                }
+                if ($count) {
+                    $sql = 'UPDATE `'.$dbtable.'`';
+                    $sql .= ' SET `data`=\''.$data.'\',';
+                    $sql .= '`mtime`=\''.$mtime.'\',';
+                    $sql .= '`ttl`=\''.$ttl.'\'';
+                    $sql .= ' WHERE `key`=\''.$key.'\' AND `plugin`=\''.$plugin.'\'';
+                } else {
+                    $sql = 'INSERT INTO `'.$dbtable.'` (`key`, `plugin`, `data`, `mtime`, `ttl`)';
+                    $sql .= ' VALUES (\''.$key.'\', \''.$plugin.'\', \''.$data.'\', \''.$mtime.'\', \''.$ttl.'\')';
+                }
+        }
 		if ($res = $this->xpwiki->db->queryF($sql)) {
 			return $ret;
 		} else {
@@ -4558,44 +4799,85 @@ EOD;
 	}
 
 	function cache_get_db ($key, $plugin='core', $delete=FALSE, $life=FALSE, $ttl_check=FALSE) {
-		if (is_null($key)) {
-			$select = ', `key`';
-			$key = '';
-			$limit = '';
-		} else {
-			$select = '';
-			$key = '`key`=\''.addslashes($key) .'\' AND ';
-			if ($ttl_check) {
-				$key .= '`ttl` > 0 AND (`mtime` + `ttl`) >= '.$this->cont['UTC'].' AND ';
-			}
-			$limit = ' LIMIT 1';
-		}
-		$plugin = addslashes($plugin);
-		$data = '';
-		$dbtable = $this->xpwiki->db->prefix($this->root->mydirname.'_cache');
+        if(XOOPS_DB_TYPE == "pdo_pgsql"){
+            if (is_null($key)) {
+                $select = ', "key"';
+                $key = '';
+                $limit = '';
+            } else {
+                $select = '';
+                $key = '"key"=\''.addslashes($key) .'\' AND ';
+                if ($ttl_check) {
+                    $key .= '"ttl" > 0 AND ("mtime" + "ttl") >= '.$this->cont['UTC'].' AND ';
+                }
+                $limit = ' LIMIT 1';
+            }
+            $plugin = addslashes($plugin);
+            $data = '';
+            $dbtable = $this->xpwiki->db->prefix($this->root->mydirname.'_cache');
 
-		$sql = 'SELECT `data`'.$select.' FROM `'.$dbtable.'` WHERE '.$key.'`plugin`=\''.$plugin.'\''.$limit;
-		if ($res = $this->xpwiki->db->query($sql)) {
-			if ($key) {
-				list($data) = $this->xpwiki->db->fetchRow($res);
-				if ($delete) {
-					$sql = 'DELETE FROM `'.$dbtable.'` WHERE '.$key.'`plugin`=\''.$plugin.'\'';
-					$this->xpwiki->db->queryF($sql);
-					$sql = 'OPTIMIZE TABLE `'.$dbtable.'`';
-					$this->xpwiki->db->queryF($sql);
-				} else if ($life) {
-					$sql = 'UPDATE `'.$dbtable.'`';
-					$sql .= ' SET `mtime`=\''.$this->cont['UTC'].'\'';
-					$sql .= ' WHERE '.$key.'`plugin`=\''.$plugin.'\'';
-					$this->xpwiki->db->queryF($sql);
-				}
-			} else {
-				$data = array();
-				while($result = $this->xpwiki->db->fetchRow($res)) {
-					$data[$result[1]] = $result[0];
-				}
-			}
-		}
+            $sql = 'SELECT "data"'.$select.' FROM "'.$dbtable.'" WHERE '.$key.'"plugin"=\''.$plugin.'\''.$limit;
+            if ($res = $this->xpwiki->db->query($sql)) {
+                if ($key) {
+                    list($data) = $this->xpwiki->db->fetchRow($res);
+                    if ($delete) {
+                        $sql = 'DELETE FROM "'.$dbtable.'" WHERE '.$key.'"plugin"=\''.$plugin.'\'';
+                        $this->xpwiki->db->queryF($sql);
+                    } else if ($life) {
+                        $sql = 'UPDATE "'.$dbtable.'"';
+                        $sql .= ' SET "mtime"=\''.$this->cont['UTC'].'\'';
+                        $sql .= ' WHERE '.$key.'"plugin"=\''.$plugin.'\'';
+                        $this->xpwiki->db->queryF($sql);
+                    }
+                } else {
+                    $data = array();
+                    while($result = $this->xpwiki->db->fetchRow($res)) {
+                        $data[$result[1]] = $result[0];
+                    }
+                }
+            }
+        } else {
+            if (is_null($key)) {
+                $select = ', `key`';
+                $key = '';
+                $limit = '';
+            } else {
+                $select = '';
+                $key = '`key`=\''.addslashes($key) .'\' AND ';
+                if ($ttl_check) {
+                    $key .= '`ttl` > 0 AND (`mtime` + `ttl`) >= '.$this->cont['UTC'].' AND ';
+                }
+                $limit = ' LIMIT 1';
+            }
+            $plugin = addslashes($plugin);
+            $data = '';
+            $dbtable = $this->xpwiki->db->prefix($this->root->mydirname.'_cache');
+
+            $sql = 'SELECT `data`'.$select.' FROM `'.$dbtable.'` WHERE '.$key.'`plugin`=\''.$plugin.'\''.$limit;
+            if ($res = $this->xpwiki->db->query($sql)) {
+                if ($key) {
+                    list($data) = $this->xpwiki->db->fetchRow($res);
+                    if ($delete) {
+                        $sql = 'DELETE FROM `'.$dbtable.'` WHERE '.$key.'`plugin`=\''.$plugin.'\'';
+                        $this->xpwiki->db->queryF($sql);
+                        if(XOOPS_DB_TYPE == "mysql"){
+                            $sql = 'OPTIMIZE TABLE `'.$dbtable.'`';
+                            $this->xpwiki->db->queryF($sql);
+                        }
+                    } else if ($life) {
+                        $sql = 'UPDATE `'.$dbtable.'`';
+                        $sql .= ' SET `mtime`=\''.$this->cont['UTC'].'\'';
+                        $sql .= ' WHERE '.$key.'`plugin`=\''.$plugin.'\'';
+                        $this->xpwiki->db->queryF($sql);
+                    }
+                } else {
+                    $data = array();
+                    while($result = $this->xpwiki->db->fetchRow($res)) {
+                        $data[$result[1]] = $result[0];
+                    }
+                }
+            }
+        }
 
 		return $data;
 	}
@@ -4606,10 +4888,15 @@ EOD;
 		$data = '';
 		$dbtable = $this->xpwiki->db->prefix($this->root->mydirname.'_cache');
 
-		$sql = 'DELETE FROM `'.$dbtable.'` WHERE `key`=\''.$key.'\' AND `plugin`=\''.$plugin.'\'';
-		$ret = $this->xpwiki->db->queryF($sql);
-		$sql = 'OPTIMIZE TABLE `'.$dbtable.'`';
-		$this->xpwiki->db->queryF($sql);
+        if(XOOPS_DB_TYPE == "pdo_pgsql"){
+		    $sql = 'DELETE FROM "'.$dbtable.'" WHERE "key"=\''.$key.'\' AND "plugin"=\''.$plugin.'\'';
+    		$ret = $this->xpwiki->db->queryF($sql);
+        } else {
+		    $sql = 'DELETE FROM `'.$dbtable.'` WHERE `key`=\''.$key.'\' AND `plugin`=\''.$plugin.'\'';
+    		$ret = $this->xpwiki->db->queryF($sql);
+    		$sql = 'OPTIMIZE TABLE `'.$dbtable.'`';
+		    $this->xpwiki->db->queryF($sql);
+        }
 
 		return $ret;
 	}
@@ -4628,7 +4915,11 @@ EOD;
 
 	function get_jobstack_imagetag () {
 		$dbtable = $this->xpwiki->db->prefix($this->root->mydirname.'_cache');
-		$sql = 'SELECT `key` FROM `'.$dbtable.'` WHERE `plugin`=\'jobstack\' LIMIT 1';
+        if(XOOPS_DB_TYPE == "pdo_pgsql"){
+		    $sql = 'SELECT "key" FROM "'.$dbtable.'" WHERE "plugin"=\'jobstack\' LIMIT 1';
+        } else {
+		    $sql = 'SELECT `key` FROM `'.$dbtable.'` WHERE `plugin`=\'jobstack\' LIMIT 1';
+        }
 		$check = '';
 		if ($res = $this->xpwiki->db->query($sql)) {
 			$check = $this->xpwiki->db->getRowsNum($res);

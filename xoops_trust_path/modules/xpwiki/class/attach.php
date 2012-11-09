@@ -1240,6 +1240,19 @@ class XpWikiAttachPages
 
 			// WHERE句
 			$where = array();
+if(XOOPS_DB_TYPE == "pdo_pgsql"){
+			$where[] = "\"pgid\" = {$pgid}";
+			if (isset($this->root->vars['popup']) && $this->root->vars['cmd'] !== 'read') $where[] = '\"name\" != "fusen.dat"';
+			if (!$isbn) $where[] = "\"mode\" != '1'";
+			if (!is_null($age)) $where[] = "\"age\" = $age";
+			//if ($mode == "imglist") $where[] = "\"type\" LIKE 'image%' AND \"age\" = 0";
+			//if ($mode == "imglist") $where[] = "\"age\" = 0";
+			if (!empty($this->root->vars['word'])) {
+				foreach(explode(' ', mb_convert_kana($this->root->vars['word'], 's')) as $search) {
+					$where[] = '\"name\" LIKE \'%'.addslashes($search).'%\'';
+				}
+			}
+} else {
 			$where[] = "`pgid` = {$pgid}";
 			if (isset($this->root->vars['popup']) && $this->root->vars['cmd'] !== 'read') $where[] = '`name` != "fusen.dat"';
 			if (!$isbn) $where[] = "`mode` != '1'";
@@ -1251,10 +1264,15 @@ class XpWikiAttachPages
 					$where[] = '`name` LIKE \'%'.addslashes($search).'%\'';
 				}
 			}
+}
 			$where = " WHERE ".join(' AND ',$where);
 
 			// このページの添付ファイル数取得
+if(XOOPS_DB_TYPE == "pdo_pgsql"){
+			$query = "SELECT count(*) as count FROM \"".$this->xpwiki->db->prefix($this->root->mydirname."_attach")."\"{$where};";
+} else {
 			$query = "SELECT count(*) as count FROM `".$this->xpwiki->db->prefix($this->root->mydirname."_attach")."`{$where};";
+}
 			if (!$result = $this->xpwiki->db->query($query))
 				{
 					$this->err = 1;
@@ -1271,7 +1289,11 @@ class XpWikiAttachPages
 			// ファイル情報取得
 			$order = ($f_order == "name")? " ORDER BY name ASC" : " ORDER BY mtime DESC";
 			$limit = " LIMIT {$start},{$max}";
+if(XOOPS_DB_TYPE == "pdo_pgsql"){
+			$query = "SELECT name,age FROM \"".$this->xpwiki->db->prefix($this->root->mydirname."_attach")."\"{$where}{$order}{$limit};";
+} else {
 			$query = "SELECT name,age FROM `".$this->xpwiki->db->prefix($this->root->mydirname."_attach")."`{$where}{$order}{$limit};";
+}
 			$result = $this->xpwiki->db->query($query);
 			while($_row = $this->xpwiki->db->fetchRow($result))
 			{
@@ -1287,12 +1309,21 @@ class XpWikiAttachPages
 			if ($_readable_where = $this->func->get_readable_where('p.')) {
 				$where[] = '(' . $_readable_where . ')';
 			}
+if(XOOPS_DB_TYPE == "pdo_pgsql"){
+			if (isset($this->root->vars['popup']) && $this->root->vars['cmd'] !== 'read') $where[] = 'a.\"name\" != "fusen.dat"';
+			if (!empty($this->root->vars['word'])) {
+				foreach(explode(' ', mb_convert_kana($this->root->vars['word'], 's')) as $search) {
+					$where[] = 'a.\"name\" LIKE \'%'.addslashes($search).'%\'';
+				}
+			}
+} else {
 			if (isset($this->root->vars['popup']) && $this->root->vars['cmd'] !== 'read') $where[] = 'a.`name` != "fusen.dat"';
 			if (!empty($this->root->vars['word'])) {
 				foreach(explode(' ', mb_convert_kana($this->root->vars['word'], 's')) as $search) {
 					$where[] = 'a.`name` LIKE \'%'.addslashes($search).'%\'';
 				}
 			}
+}
 			$where = $where? " WHERE ".join(' AND ',$where) : '';
 
 			// 添付ファイルのあるページ数カウント
@@ -1378,11 +1409,19 @@ class XpWikiAttachPages
 			}
 
 			$where = array();
+if(XOOPS_DB_TYPE == "pdo_pgsql"){
+			if (!empty($this->root->vars['word'])) {
+				foreach(explode(' ', mb_convert_kana($this->root->vars['word']), 's') as $search) {
+					$where[] = 'a.\"name\" LIKE \'%'.addslashes($search).'%\'';
+				}
+			}
+} else {
 			if (!empty($this->root->vars['word'])) {
 				foreach(explode(' ', mb_convert_kana($this->root->vars['word']), 's') as $search) {
 					$where[] = 'a.`name` LIKE \'%'.addslashes($search).'%\'';
 				}
 			}
+}
 			$where = $where? ' AND ' . join(' AND ', $where) : '';
 
 			$otherPages = array();
@@ -1397,7 +1436,11 @@ class XpWikiAttachPages
 						$shown[] = $_page;
 						$_pgid = $this->func->get_pgid_by_name($_page);
 						if ($_pgid) {
-							$query = 'SELECT count( * ) FROM `' . $this->xpwiki->db->prefix($this->root->mydirname.'_attach') . '` a WHERE a.pgid="' . $_pgid . '" AND a.age = 0 AND a.name != "fusen.dat"' . $where . ' LIMIT 1';
+                            if(XOOPS_DB_TYPE == "pdo_pgsql"){
+							    $query = 'SELECT count( * ) FROM "' . $this->xpwiki->db->prefix($this->root->mydirname.'_attach') . '" a WHERE a.pgid="' . $_pgid . '" AND a.age = 0 AND a.name != "fusen.dat"' . $where . ' LIMIT 1';
+                            } else {
+							    $query = 'SELECT count( * ) FROM `' . $this->xpwiki->db->prefix($this->root->mydirname.'_attach') . '` a WHERE a.pgid="' . $_pgid . '" AND a.age = 0 AND a.name != "fusen.dat"' . $where . ' LIMIT 1';
+                            }
 							$count = '';
 							if ($result = $this->xpwiki->db->query($query)) {
 								$row = $this->xpwiki->db->fetchRow($result);
@@ -1418,7 +1461,11 @@ class XpWikiAttachPages
 				$otherPages[] = '</optgroup>';
 			}
 
+if(XOOPS_DB_TYPE == "pdo_pgsql"){
+			$query = 'SELECT p.name, count( * ) AS count FROM "' . $this->xpwiki->db->prefix($this->root->mydirname.'_pginfo') . '" p INNER JOIN "' . $this->xpwiki->db->prefix($this->root->mydirname.'_attach') . '" a ON p.pgid = a.pgid WHERE a.age =0 AND a.name != "fusen.dat"' . $where . ' GROUP BY a.pgid ORDER BY count DESC, p.name ASC LIMIT 0 , 50';
+} else {
 			$query = 'SELECT p.name, count( * ) AS count FROM `' . $this->xpwiki->db->prefix($this->root->mydirname.'_pginfo') . '` p INNER JOIN `' . $this->xpwiki->db->prefix($this->root->mydirname.'_attach') . '` a ON p.pgid = a.pgid WHERE a.age =0 AND a.name != "fusen.dat"' . $where . ' GROUP BY a.pgid ORDER BY count DESC, p.name ASC LIMIT 0 , 50';
+}
 			if ($result = $this->xpwiki->db->query($query)) {
 				$otherPages[] = '<optgroup label="' . $this->root->_attach_messages['msg_select_manyitems'] . '">';
 				while($row = $this->xpwiki->db->fetchRow($result)) {

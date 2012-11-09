@@ -228,7 +228,7 @@ if (isset($const['page_show'])) {
 	// Check etc. only admin.
 	if ($root->userinfo['admin']) {
 		// Database check
-		$query = 'SELECT `key` FROM ' . $this->xpwiki->db->prefix($root->mydirname.'_cache') . ' LIMIT 1' ;
+		$query = 'SELECT "key" FROM ' . $this->xpwiki->db->prefix($root->mydirname.'_cache') . ' LIMIT 1' ;
 		if(! $this->xpwiki->db->query($query)) {
 			$title = 'Please update this module on admin panel.';
 			if (defined('XOOPS_CUBE_LEGACY')) {
@@ -523,7 +523,7 @@ if (isset($const['page_show'])) {
 
 	// dbsync の必要性チェック (初期導入時)
 	if ($root->userinfo['admin'] && $root->vars['cmd'] === 'read') {
-		$query = 'SELECT `pgid` FROM ' . $this->xpwiki->db->prefix($root->mydirname.'_pginfo') . ' LIMIT 1' ;
+		$query = 'SELECT "pgid" FROM ' . $this->xpwiki->db->prefix($root->mydirname.'_pginfo') . ' LIMIT 1' ;
 		if (! $this->xpwiki->db->getRowsNum($this->xpwiki->db->query($query))) {
 			$this->redirect_header($root->script . '?cmd=dbsync', 0, 'Welcome to xpWiki Database Sync.');
 		}
