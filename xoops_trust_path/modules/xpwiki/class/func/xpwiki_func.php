@@ -4604,7 +4604,7 @@ EOD;
 		if ($this->is_page($page)) return $page;
 
         if(XOOPS_DB_TYPE == "pdo_pgsql"){
-		    $query = 'SELECT \"name\" FROM \"'.$this->xpwiki->db->prefix($this->root->mydirname.'_pginfo').'\" WHERE \"name_ci\" = \''.addslashes($page).'\' LIMIT 1';
+		    $query = 'SELECT "name" FROM "'.$this->xpwiki->db->prefix($this->root->mydirname.'_pginfo').'" WHERE "name_ci" = \''.addslashes($page).'\' LIMIT 1';
         } else {
 		    $query = 'SELECT `name` FROM `'.$this->xpwiki->db->prefix($this->root->mydirname.'_pginfo').'` WHERE `name_ci` = \''.addslashes($page).'\' LIMIT 1';
         }

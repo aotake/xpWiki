@@ -86,7 +86,11 @@ EOD;
 		$writed = $modify = FALSE;
 
 		$db =& $this->xpwiki->db;
-		$query = 'SELECT `count` as total, `today` as date, `today_count` as today, `yesterday_count` as yesterday, `ip` FROM '.$this->xpwiki->db->prefix($this->root->mydirname."_count").' WHERE `pgid`='.$pgid.' LIMIT 1';
+        if(XOOPS_DB_TYPE == "pdo_pgsql"){
+    		$query = 'SELECT "count" as total, "today" as date, "today_count" as today, "yesterday_count" as yesterday, "ip" FROM '.$this->xpwiki->db->prefix($this->root->mydirname."_count").' WHERE "pgid"='.$pgid.' LIMIT 1';
+        } else {
+		    $query = 'SELECT `count` as total, `today` as date, `today_count` as today, `yesterday_count` as yesterday, `ip` FROM '.$this->xpwiki->db->prefix($this->root->mydirname."_count").' WHERE `pgid`='.$pgid.' LIMIT 1';
+        }
 		if (! $result = $db->query($query)) {
 			$default[$this->xpwiki->pid];
 		}
@@ -144,12 +148,20 @@ EOD;
 		if ($writed && isset($total)) {
 		//	$pgid = $this->func->get_pgid_by_name($page);
 
-			$query = "UPDATE ".$db->prefix($this->root->mydirname."_count")." SET `count`='$total',`today`='$date',`today_count`='$today',`yesterday_count`='$yesterday',`ip`='$ip' WHERE `pgid`='$pgid' LIMIT 1";
+            if(XOOPS_DB_TYPE == "pdo_pgsql"){
+			    $query = "UPDATE ".$db->prefix($this->root->mydirname."_count")." SET \"count\"='$total',\"today\"='$date',\"today_count\"='$today',\"yesterday_count\"='$yesterday',\"ip\"='$ip' WHERE \"pgid\"='$pgid'";
+            } else {
+			    $query = "UPDATE ".$db->prefix($this->root->mydirname."_count")." SET `count`='$total',`today`='$date',`today_count`='$today',`yesterday_count`='$yesterday',`ip`='$ip' WHERE `pgid`='$pgid' LIMIT 1";
+            }
 			$result=$db->queryF($query);
 
 			if (! $db->getAffectedRows())
 			{
-				$query = "INSERT INTO ".$db->prefix($this->root->mydirname."_count")." (`pgid`,`count`,`today`,`today_count`,`yesterday_count`,`ip`) VALUES('$pgid','$total','$date','$today','$yesterday','$ip')";
+                if(XOOPS_DB_TYPE == "pdo_pgsql"){
+				    $query = "INSERT INTO ".$db->prefix($this->root->mydirname."_count")." (\"pgid\",\"count\",\"today\",\"today_count\",\"yesterday_count\",\"ip\") VALUES('$pgid','$total','$date','$today','$yesterday','$ip')";
+                } else {
+				    $query = "INSERT INTO ".$db->prefix($this->root->mydirname."_count")." (`pgid`,`count`,`today`,`today_count`,`yesterday_count`,`ip`) VALUES('$pgid','$total','$date','$today','$yesterday','$ip')";
+                }
 				$result=$db->queryF($query);
 			}
 		}
